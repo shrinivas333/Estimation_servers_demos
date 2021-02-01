@@ -74,20 +74,28 @@ class Item(models.Model):
         item.gst=data['gst']
         item.material=data['material']
         item.save()
-
+        
+        addons_quantity_list=data['addons']
     #adding addons to items list
         add_lists=AddOn.addAddons(data['addons'])
         print(add_lists)
-        for add_list in add_lists:
-            item.addons.add(add_list)  
-
+        print(addons_quantity_list)
+       
+        for addon in add_lists:       
+            item_addon=ItemAddon(item=item,addon=addon)
+            for quant in addons_quantity_list:
+                if addon.description==quant['description']: 
+                    print(quant['quantity'])
+                    item_addon.quantity = quant['quantity']      
+            print(item_addon)
+            item_addon.save() 
         return item
 
 
 class ItemAddon(models.Model):
     item=models.ForeignKey(Item,on_delete=models.CASCADE)
     addon=models.ForeignKey(AddOn,on_delete=models.CASCADE)
-    quantity=models.FloatField()
+    quantity=models.FloatField(null=True,blank=True)
 
 
 class Order(models.Model):
