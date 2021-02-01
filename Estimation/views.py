@@ -5,7 +5,50 @@ from .models import User,AddOn,Item,Order,ItemAddon
 from rest_framework import viewsets, mixins,serializers
 from django.http import HttpResponse
 import json
+from rest_framework.views import APIView
+
 # Create your views here.
+
+
+class ListAddons(APIView):
+    """
+    View to list all users in the system.
+
+    * Requires token authentication.
+    * Only admin users are able to access this view.
+    """
+    # authentication_classes = [authentication.TokenAuthentication]
+    # permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request, format=None):
+        """
+        Return a list of all users.
+        """
+        items=Item.objects.all()
+        itemList=[]
+
+        for item in items:
+            item_content={}
+            item_content['item_id']=item.item_id
+
+
+
+            itemAddons=ItemAddon.objects.filter(item=item)
+            item_addon_list=[]
+
+            for itemAddon in itemAddons:
+                addon_content={}
+                addon_content['description'] = itemAddon.item.description
+                addon_content['cost'] = itemAddon.item.cost
+                addon_content['gst'] = itemAddon.item.gst
+                addon_content['material'] = itemAddon.item.material
+                addon_content['quantity'] = itemAddon.quantity
+
+                item_addon_list.append(addon_content)
+            item_content['addons']=item_addon_list
+            itemList.append(item_content)
+
+        return Response(itemList)
 
 class UserViewsets(viewsets.ModelViewSet):
     queryset=User.objects.all()
