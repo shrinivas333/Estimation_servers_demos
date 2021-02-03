@@ -28,8 +28,8 @@ class AddOn(models.Model):
         addons_list=[]
         for i in data:
             try:
-                print(i['description'])
-                addon=AddOn.objects.get(description__icontains=i['description'])
+                print(i['addon_id'])
+                addon=AddOn.objects.get(pk=i['addon_id'])
             except:
                 addon=None
             print('from table')
@@ -84,7 +84,7 @@ class Item(models.Model):
         for addon in add_lists:       
             item_addon=ItemAddon(item=item,addon=addon)
             for quant in addons_quantity_list:
-                if addon.description==quant['description']: 
+                if addon.addon_id==quant['addon_id']: 
                     print(quant['quantity'])
                     item_addon.quantity = quant['quantity']      
             print(item_addon)

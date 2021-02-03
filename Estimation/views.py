@@ -5,8 +5,122 @@ from .models import User,AddOn,Item,Order,ItemAddon
 from rest_framework import viewsets, mixins,serializers
 from django.http import HttpResponse
 import json
+from django.http import Http404
 from rest_framework.decorators import action
+from rest_framework.views import APIView
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.pagination import BasePagination
+from django.core.paginator import Paginator,EmptyPage,InvalidPage
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.authentication import TokenAuthentication
 # Create your views here.
+
+class CustomPagination(PageNumberPagination):
+    def get_paginated_response(self, data):
+        return Response({
+            'links': {
+                'next': self.get_next_link(),
+                'previous': self.get_previous_link()
+            },
+            'count': self.page.paginator.count,
+            'results': data
+        })
+
+
+class ListAddons(APIView):
+    """
+    View to list all users in the system.
+
+    * Requires token authentication.
+    * Only admin users are able to access this view.
+    """
+    # authentication_classes = [authentication.TokenAuthentication]
+    # permission_classes = [permissions.IsAdminUser]
+    pagination_class = CustomPagination
+    # authentication_classes = [authentication.TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+    def get(self, request, format=None):
+        """
+        Return a list of all users.
+        """
+        
+        
+        items=Item.objects.all()
+        itemList=[]
+
+        for item in items:
+            item_content={}
+            item_content['item_id']=item.item_id
+            
+
+
+            itemAddons=ItemAddon.objects.filter(item=item)
+            item_addon_list=[]
+
+            for itemAddon in itemAddons:
+                addon_content={}
+                addon_content['addon_id']=itemAddon.addon.addon_id
+                addon_content['description'] = itemAddon.addon.description
+                addon_content['cost'] = itemAddon.addon.cost
+                addon_content['gst'] = itemAddon.addon.gst
+                addon_content['material'] = itemAddon.addon.material
+                addon_content['quantity'] = itemAddon.quantity
+
+                item_addon_list.append(addon_content)
+
+            item_content['addons']=item_addon_list
+            item_content['description']=item.description
+            item_content['cost']=item.cost
+            item_content['gst']=item.gst
+            item_content['material']=item.material
+            itemList.append(item_content)
+
+      
+
+        return Response(itemList)
+
+
+    def post(self,request):
+        print(request.data)
+        item=Item.saveItems(request.data)
+        return Response({"Results":item})     
+
+class ListAddonsDetails(APIView):
+        '''
+            Retrive, delete and patch operations for  items 
+        '''
+        permission_classes = [IsAuthenticated]
+        def get(self ,request,pk,format=None):
+            try:
+                item=Item.objects.get(pk=pk)
+                print(item)
+                item_content={}
+                item_content['item_id']=item.item_id
+                
+
+                itemAddons=ItemAddon.objects.filter(item=item)
+                item_addon_list=[]
+                for itemAddon in itemAddons:
+                    addon_content={}
+                    addon_content['addon_id']=itemAddon.addon.addon_id
+                    addon_content['description'] = itemAddon.addon.description
+                    addon_content['cost'] = itemAddon.addon.cost
+                    addon_content['gst'] = itemAddon.addon.gst
+                    addon_content['material'] = itemAddon.addon.material
+                    addon_content['quantity'] = itemAddon.quantity
+
+                    item_addon_list.append(addon_content)
+                item_content['addons']=item_addon_list
+                item_content['description']=item.description
+                item_content['cost']=item.cost
+                item_content['gst']=item.gst
+                item_content['material']=item.material
+
+                return Response(item_content)
+
+            except item.DoesNotExist:
+                raise Http404
+
 
 class UserViewsets(viewsets.ModelViewSet):
     queryset=User.objects.all()
@@ -24,50 +138,17 @@ class AddonViewSet(viewsets.GenericViewSet,
     
 
 class ItemsViewSet(viewsets.GenericViewSet,
+                    mixins.ListModelMixin,
                     mixins.CreateModelMixin,
                     mixins.RetrieveModelMixin,
                     mixins.UpdateModelMixin,
                     mixins.DestroyModelMixin):
-    # queryset = Item.objects.all()
-    
+    pagination_class=CustomPagination
+    queryset = Item.objects.all()
     serializer_class=ItemSerializer
 
    
   
-    @action(detail=True, methods=['Get'])
-    def get_items(self):
-        
-        Items=Item.objects.all()
-        print(Items)
-        items_list=[]
-        addons_list=[]
-        for item in Items:
-            print(item.item_id)
-            print(item.addons.all())
-            intermdediate=ItemAddon.objects.filter(item=item)
-            if intermdediate:
-                print(intermdediate.item)
-            try :
-                for addon in item.addons.all():
-                    quantity =ItemAddon.objects.get(item=item,addon=addon)
-                    print(quantity)
-                    addondict={"addon_id":addon.addon_id,"description":addon.description,"cost":addon.cost,"gst":addon.gst,"material":addon.material,"quantity":quantity.quantity}
-
-                    addons_list.append(addondict)
-            except:
-                addons_list.append(None)
-            iteminfo={}
-            iteminfo['item_id']=item.item_id
-            iteminfo['addons']=addons_list
-            iteminfo['description']=item.description
-            iteminfo['cost']=item.cost
-            iteminfo['gst']=item.gst
-            iteminfo['material']=item.material
-
-            items_list.append(iteminfo)
-
-        return HttpResponse(json.dumps(items_list))
-
     def create(self,request):
         print(request.data)
         item=Item.saveItems(request.data)

@@ -23,7 +23,8 @@ class AddOnSerializer(serializers.ModelSerializer):
 
     def get_quantity(self,instance):
         print(instance)
-        item_addons=ItemAddon.objects.filter(addon=instance)
+        # item_addons=ItemAddon.objects.filter(addon=instance)
+        # print(item_addons)
         # tem_addon=ItemAddon.objects.filter(addon=instance)
         # print(tem_addon)
     #     return item_addon.quantity
@@ -31,10 +32,12 @@ class AddOnSerializer(serializers.ModelSerializer):
 
 class ItemSerializer(serializers.ModelSerializer):
     addons=AddOnSerializer(many=True,)
+ 
     class Meta:
         model=Item
         # fields ='__all__'
         fields=('item_id' ,'addons' ,'description','cost','gst','material')
+
 
         
 
