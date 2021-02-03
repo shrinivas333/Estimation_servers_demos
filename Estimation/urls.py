@@ -18,6 +18,7 @@ urlpatterns = [
     path('',include(router.urls)),
     path('items/',ListAddons.as_view()),
     path('items/<int:pk>/',views.ListAddonsDetails.as_view())
+  
     
     
 ]

@@ -26,6 +26,10 @@ class CustomPagination(PageNumberPagination):
             'results': data
         })
 
+from rest_framework.views import APIView
+
+# Create your views here.
+
 
 class ListAddons(APIView):
     """
