@@ -13,41 +13,28 @@ from rest_framework.pagination import BasePagination
 from django.core.paginator import Paginator,EmptyPage,InvalidPage
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import TokenAuthentication
-# Create your views here.
-
-class CustomPagination(PageNumberPagination):
-    def get_paginated_response(self, data):
-        return Response({
-            'links': {
-                'next': self.get_next_link(),
-                'previous': self.get_previous_link()
-            },
-            'count': self.page.paginator.count,
-            'results': data
-        })
-
+from Estimation_server_demo.pagination import CustomPagination
 from rest_framework.views import APIView
-
+from rest_framework.generics import GenericAPIView
 # Create your views here.
 
 
-class ListAddons(APIView):
+class ListAddons(GenericAPIView):
     """
     View to list all users in the system.
 
     * Requires token authentication.
     * Only admin users are able to access this view.
     """
-    # authentication_classes = [authentication.TokenAuthentication]
-    # permission_classes = [permissions.IsAdminUser]
+    queryset=Item.objects.all()
+    serializer_class=ItemSerializer
     pagination_class = CustomPagination
-    # authentication_classes = [authentication.TokenAuthentication]
     permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         """
         Return a list of all users.
         """
-        
+        print(CustomPagination)
         
         items=Item.objects.all()
         itemList=[]
@@ -79,7 +66,8 @@ class ListAddons(APIView):
             item_content['material']=item.material
             itemList.append(item_content)
 
-      
+    
+        
 
         return Response(itemList)
 
