@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.response import Response
-from .serializer import CustomerSerializer,AddOnSerializer,ItemSerializer,orderSerializer
+from .serializer import CustomerSerializer,AddOnSerializer,ItemSerializer,orderSerializer,ItemS
 from .models import User,AddOn,Item,Order,ItemAddon
 from rest_framework import viewsets, mixins,serializers
 from django.http import HttpResponse
@@ -23,6 +23,15 @@ class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = 'page_size'
     max_page_size = 10
+
+
+class ItemViewsets(viewsets.ModelViewSet):
+    queryset=Item.objects.all()
+    serializer_class= ItemS
+    pagination_class = StandardResultsSetPagination
+
+
+
 
 class ListAddons(CustomApiView):
     """

@@ -10,6 +10,7 @@ router=routers.DefaultRouter()
 # router.register('items',views.ItemsViewSet,basename="items")
 router.register('addon',views.AddonViewSet,basename="addon")
 router.register('users',views.UserViewsets,basename="users")
+router.register('items_page',views.ItemsViewSet,basename='items_page')
 
 
 
