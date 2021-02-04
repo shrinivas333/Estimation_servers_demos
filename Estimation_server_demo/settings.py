@@ -46,7 +46,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.TokenAuthentication',
     ],
-     'DEFAULT_PAGINATION_CLASS': 'Estimation_server_demo.pagination.CustomPagination'
+    
     
 }
 MIDDLEWARE = [

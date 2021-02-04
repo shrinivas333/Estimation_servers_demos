@@ -16,27 +16,32 @@ from rest_framework.authentication import TokenAuthentication
 from Estimation_server_demo.pagination import CustomPagination
 from rest_framework.views import APIView
 from rest_framework.generics import GenericAPIView
+from .customview import CustomApiView
 # Create your views here.
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 10
 
-class ListAddons(GenericAPIView):
+class ListAddons(CustomApiView):
     """
     View to list all users in the system.
 
     * Requires token authentication.
     * Only admin users are able to access this view.
     """
-    queryset=Item.objects.all()
+    
     serializer_class=ItemSerializer
-    pagination_class = CustomPagination
+    pagination_class = StandardResultsSetPagination
     permission_classes = [IsAuthenticated]
     def get(self, request, format=None):
         """
         Return a list of all users.
         """
-        print(CustomPagination)
+        print(self.request.user)
         
-        items=Item.objects.all()
+        items=Item.objects.filter()
         itemList=[]
 
         for item in items:
