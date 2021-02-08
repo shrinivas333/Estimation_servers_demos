@@ -1,15 +1,32 @@
 from django.db import models
-
+from django.contrib.auth.models import User
+from django.utils import timezone
 # Create your models here.
 
-class User(models.Model):
-    user_id=models.AutoField(primary_key=True)
-    username=models.CharField(max_length=100)
-    password=models.CharField(max_length=30)
-    email=models.EmailField()
+class Customer(models.Model):
+    customer_id=models.AutoField(primary_key=True)
+    user=models.ForeignKey(User,blank=True, null=True, on_delete=models.SET_NULL)
+    customername=models.CharField(max_length=100)
+    phone = models.CharField(max_length=20, blank=True, default=None, null=True)
+    email = models.EmailField(default=None, null=True, blank=True)
+    address = models.CharField(max_length=400, blank=True, default=None, null=True)
+    date_added = models.DateTimeField(auto_now_add=True, null=True)
 
-    def __str__(self):
-        return self.username
+    @staticmethod
+    def addcustomer(data,self):
+        print(self.request.user)
+        try:
+            customer=Customer.objects.get(data['phone'])
+        except:
+            customer=None
+        if customer is None:
+            customer=Customer(customername=data['customername'],phone=data['phone'],email=data['email'],address=data['address'])
+            customer.save()
+            print(customer)
+        return customer
+
+    # def __str__(self):
+    #     return self.customername
 
 class AddOn(models.Model):
     GOLD = 0;
@@ -28,17 +45,15 @@ class AddOn(models.Model):
         addons_list=[]
         for i in data:
             try:
-                print(i['addon_id'])
+                
                 addon=AddOn.objects.get(pk=i['addon_id'])
             except:
                 addon=None
-            print('from table')
-            print(addon)
+           
             if addon is None:
                 addon=AddOn(description=i['description'],cost=i['cost'],gst=i['gst'],material=i['material'])
                 addon.save()
-                print('from frontend')
-                print(addon)
+               
             
             addons_list.append(addon)
         return addons_list
@@ -64,32 +79,40 @@ class Item(models.Model):
     cost=models.FloatField()
     gst=models.FloatField(null=True,blank=True)
     material=models.SmallIntegerField(choices=MATERIAL_CHOICE,default=GOLD)
+    user=models.ForeignKey(User,blank=True, null=True, on_delete=models.SET_NULL)
 
     @staticmethod 
-    def saveItems(data):
+    def saveItems(data,self):
+        itemList=[]
         print(data)
-        item=Item()
-        item.description=data['description']
-        item.cost=data['cost']
-        item.gst=data['gst']
-        item.material=data['material']
-        item.save()
+      
+        for item in data:
+            i=Item()
+            i.description=item['description']
+            i.cost=item['cost']
+            i.gst=item['gst']
+            i.material=item['material']
+            i.user=self.request.user
+            i.save()
+            print(item['addons'])
+            addons_quantity_list=item['addons']
+        #adding addons to items list
+            add_lists=AddOn.addAddons(item['addons'])
+            print(add_lists)
+
+            print(addons_quantity_list)
         
-        addons_quantity_list=data['addons']
-    #adding addons to items list
-        add_lists=AddOn.addAddons(data['addons'])
-        print(add_lists)
-        print(addons_quantity_list)
-       
-        for addon in add_lists:       
-            item_addon=ItemAddon(item=item,addon=addon)
-            for quant in addons_quantity_list:
-                if addon.addon_id==quant['addon_id']: 
-                    print(quant['quantity'])
-                    item_addon.quantity = quant['quantity']      
-            print(item_addon)
-            item_addon.save() 
-        return item
+            for addon in add_lists:       
+                item_addon=ItemAddon(item=i,addon=addon)
+                for quant in addons_quantity_list:
+                    if addon.addon_id==quant['addon_id']: 
+                        print(quant['quantity'])
+                        item_addon.quantity = quant['quantity']     
+                item_addon.save()
+                print(item_addon)
+            itemList.append(i)
+            print(itemList)   
+        return itemList
 
 
 class ItemAddon(models.Model):
@@ -100,10 +123,31 @@ class ItemAddon(models.Model):
 
 class Order(models.Model):
     order_id=models.AutoField(primary_key=True)
-    customer=models.ForeignKey(User,default=None,null=True, on_delete=models.SET_NULL)
+    user=models.ForeignKey(User,blank=True, null=True, on_delete=models.SET_NULL)
+    customer=models.ForeignKey(Customer,default=None,null=True, on_delete=models.SET_NULL)
     items=models.ManyToManyField(Item,related_name="orders")
     Total=models.FloatField()
     gst=models.FloatField()
     create_date =models.DateTimeField(auto_now_add=True, null=True)
     delivery_date=models.DateTimeField(null=True,default=None)
+
+    @staticmethod 
+    def saveOrders(data,self):
+        print(data)
+        order=Order()
+        order.user=self.request.user
+        order.Total=data['Total']
+        order.gst=data['gst']
+        order.delivery_date=timezone.now()+timezone.timedelta(days=10)
+        order.save()
+
+        customer=Customer.addcustomer(data['customer'],self)
+        print(customer)
+        order.customer=customer
+        items_lists=Item.saveItems(data['items'],self)
+        print(items_lists)
+        for item in items_lists:
+            order.items.add(item)
+        
+        return order
 
