@@ -16,17 +16,19 @@ class Customer(models.Model):
     def addcustomer(data,self):
         print(self.request.user)
         try:
-            customer=Customer.objects.get(data['phone'])
+            customer=Customer.objects.get(phone=data['phone'])
+            print(customer)
         except:
             customer=None
+
         if customer is None:
             customer=Customer(customername=data['customername'],phone=data['phone'],email=data['email'],address=data['address'])
             customer.save()
             print(customer)
         return customer
 
-    # def __str__(self):
-    #     return self.customername
+    def __str__(self):
+        return self.customername
 
 class AddOn(models.Model):
     GOLD = 0;
@@ -139,11 +141,12 @@ class Order(models.Model):
         order.Total=data['Total']
         order.gst=data['gst']
         order.delivery_date=timezone.now()+timezone.timedelta(days=10)
+        customer1=Customer.addcustomer(data['customer'],self)
+        print(customer1)
+        order.customer=customer1
         order.save()
 
-        customer=Customer.addcustomer(data['customer'],self)
-        print(customer)
-        order.customer=customer
+       
         items_lists=Item.saveItems(data['items'],self)
         print(items_lists)
         for item in items_lists:

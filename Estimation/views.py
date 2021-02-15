@@ -41,6 +41,9 @@ class ItemViewsets(viewsets.ModelViewSet):
 class UserViewsets(viewsets.ModelViewSet):
     queryset=Customer.objects.all()
     serializer_class=CustomerSerializer
+    pagination_class = StandardResultsSetPagination
+    # filter_backends = [filters.SearchFilter]
+    filter_fields = ('phone','customername')
 
 class AddonViewSet(viewsets.GenericViewSet,
                                 mixins.ListModelMixin,
